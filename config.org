@@ -1,0 +1,595 @@
+#+TITLE: GNU Emacs (config files)
+#+AUTHOR: Maximiliano Christener
+
+* Índice :TOC:
+- [[#emacs][Emacs]]
+- [[#gpg-epg-easypg-library][GPG: epg (EasyPG library)]]
+- [[#delight][Delight]]
+- [[#python][Python]]
+- [[#latex][LaTeX]]
+- [[#dashboard][Dashboard]]
+- [[#magit][Magit]]
+- [[#terminal-emulators][Terminal emulators]]
+- [[#marginalia][Marginalia]]
+- [[#org-mode][Org Mode]]
+  - [[#expansions-in-org-tempo][Expansions in Org-Tempo]]
+- [[#markdown][Markdown]]
+- [[#company-mode-completion][Company mode (completion)]]
+- [[#tree-sitter-integration][Tree-sitter Integration]]
+- [[#dired][Dired]]
+- [[#icons][Icons]]
+- [[#evil][Evil]]
+- [[#darkroom-zen-mode][Darkroom (zen-mode)]]
+- [[#denote][Denote]]
+- [[#windmove][Windmove]]
+
+* Emacs
+Algunos tips útiles para la navegación:
+- =C-c C-x a= para archivar (org-toggle-archive-tag)
+- =C-c TAB= para abrir el árbol (org-ctrl-c-tab)
+- =C-c C-o= (org-open-at-point)
+
+#+begin_src emacs-lisp
+  (defvar default-emacs-font "JetBrainsMono NF 14"
+    "The main font used by Emacs")
+
+  (use-package emacs
+    :config
+    (load-theme 'modus-vivendi t)
+    (add-to-list 'default-frame-alist `(font . ,default-emacs-font))
+    ;; (set-face-attribute 'default nil :height 125) ;; default zoom
+
+    ;; functions
+    (defun christener/open-config-file ()
+      "Opens config.org"
+      (interactive)
+      (progn 
+        (find-file (expand-file-name "config.org" user-emacs-directory))
+        (message "Displaying config.org")))
+
+    ;; https://www.emacswiki.org/emacs/ToggleWindowSplit
+    (defun christener/window-rotate-split ()
+      "Switch window split from horizontally to vertically, or vice versa."
+      (interactive)
+      (require 'windmove)
+      (let ((done))
+        (dolist (dirs '((right . down) (down . right)))
+          (unless done
+            (let* ((win (selected-window))
+                   (nextdir (car dirs))
+                   (neighbour-dir (cdr dirs))
+                   (next-win (windmove-find-other-window nextdir win))
+                   (neighbour1 (windmove-find-other-window neighbour-dir win))
+                   (neighbour2 (if next-win (with-selected-window next-win
+                                              (windmove-find-other-window neighbour-dir next-win)))))
+              (setq done (and (eq neighbour1 neighbour2)
+                              (not (eq (minibuffer-window) next-win))))
+              (if done
+                  (let* ((other-buf (window-buffer next-win)))
+                    (delete-window next-win)
+                    (if (eq nextdir 'right)
+                        (split-window-vertically)
+                      (split-window-horizontally))
+                    (set-window-buffer (windmove-find-other-window neighbour-dir) other-buf))))))))
+    
+    :custom
+    (mode-line-position-column-line-format '("%l:%C"))
+    
+    :hook
+    ((python-mode TeX-mode) . electric-pair-mode)
+
+    :bind
+    ;; minor modes
+    ("C-x C-M-a" . auto-fill-mode)
+    ("C-x C-M-v" . visual-line-mode)
+    ;; custom functions
+    ("C-x M-x" . christener/open-config-file)
+    ("s-r" . christener/window-rotate-split)
+    ;; alternative keybindings for resizing
+    ("s--" . shrink-window)
+    ("s-+" . enlarge-window)
+    ("C-s--" . shrink-window-horizontally)
+    ("C-s-+" . enlarge-window-horizontally)
+    ;; vim-like C-d C-u motions
+    ("s-d" . (lambda () (interactive) (next-line 20)))
+    ("s-u" . (lambda () (interactive) (previous-line 20)))
+    )
+#+end_src
+
+* GPG: epg (EasyPG library)
+#+begin_src emacs-lisp
+  (use-package epg
+    :custom
+    (epg-pinentry-mode 'loopback)
+    )
+#+end_src
+
+* Delight
+Delight es un paquete que esconde minor-modes del mode line. When delight is
+installed, you can use the :delight keyword. If the mode name doesn’t match the
+package name with ‘-mode’ appended, provide a symbol instead.
+#+begin_src emacs-lisp
+  (use-package delight
+    :ensure t)
+#+end_src
+
+* Python
+#+begin_src emacs-lisp
+  (use-package uv-mode
+    :ensure t
+    :hook (python-mode . uv-mode-auto-activate-hook))
+#+end_src
+
+* LaTeX
+Usamos =auctex=. No confundir =latex-mode= (built-in into emacs) con
+=TeX-tex-mode= (el major mode de =auctex=).
+#+begin_src emacs-lisp
+  (use-package auctex
+    :ensure t
+    :mode ("\\.tex\\'" . latex-mode)
+    :custom
+    (TeX-auto-save t)
+    (Tex-parse-self t)
+    (TeX-newline-function 'reindent-then-newline-and-indent)
+    (TeX-view-program-selection '((output-dvi "Zathura")
+                                  (output-pdf "Zathura")))
+    (TeX-source-correlate-mode t)
+    :hook
+    (TeX-mode . eglot-ensure))
+#+end_src
+
+* Dashboard
+#+begin_src emacs-lisp
+  (use-package dashboard
+    :ensure t
+    :config
+    (dashboard-setup-startup-hook)
+    (setq initial-buffer-choice (lambda () (get-buffer-create dashboard-buffer-name)))
+
+    ;; Set the title
+    (setq dashboard-banner-logo-title "Welcome to GNU Emacs")
+
+
+    ;; Set the banner
+    (if (display-graphic-p)
+        (setq dashboard-startup-banner 'official) (setq dashboard-startup-banner 3))
+    ;; Value can be:
+    ;;  - 'official which displays the official emacs logo.
+    ;;  - 'logo which displays an alternative emacs logo.
+    ;;  - an integer which displays one of the text banners
+    ;;    (see dashboard-banners-directory files).
+    ;;  - a string that specifies a path for a custom banner
+    ;;    currently supported types are gif/image/text/xbm.
+    ;;  - a cons of 2 strings which specifies the path of an image to use
+    ;;    and other path of a text file to use if image isn't supported.
+    ;;    (cons "path/to/image/file/image.png" "path/to/text/file/text.txt").
+    ;;  - a list that can display an random banner,
+    ;;    supported values are: string (filepath), 'official, 'logo and integers.
+
+    ;; Content is not centered by default. To center, set
+    (setq dashboard-center-content t)
+    ;; vertically center content
+    (setq dashboard-vertically-center-content t)
+
+    ;; dashboard items
+    (setq dashboard-items '(
+                              (recents   . 3)
+                              (projects  . 3)
+                              (bookmarks    . 5)))
+
+    ;; nerd-fonts
+    ;;(setq dashboard-display-icons-p t)     ; display icons on both GUI and terminal
+    (setq dashboard-icon-type 'nerd-icons) ; use `nerd-icons' package
+
+    ;; icons
+    (setq dashboard-set-heading-icons t)
+    (setq dashboard-set-file-icons t))
+#+end_src
+
+* Magit
+#+begin_src emacs-lisp
+  (use-package magit
+    :ensure t
+    :defer t)
+#+end_src
+
+* Terminal emulators
+#+begin_src emacs-lisp
+  ;;; vterm
+  (use-package vterm
+    :ensure t
+    :defer t
+    :bind
+    ("C-x v t" . vterm-other-window)
+    :custom
+    (vterm-shell "/bin/zsh"))
+
+  ;; eshell
+  (use-package eshell-syntax-highlighting
+    :ensure t
+    :after esh-mode
+    :config
+    (eshell-syntax-highlighting-global-mode +1) ; adds fish/zsh-like syntax highlighting
+    :custom
+    (eshell-history-size 5000)
+    (eshell-buffer-maximum-lines 5000)
+    (eshell-hist-ignoredups t)
+    (eshell-scroll-to-bottom-on-input t)
+    (eshell-destroy-buffer-when-process-dies t)
+    (eshell-visual-commands'("bash" "fish" "htop" "ssh" "top" "zsh"))
+    ;;(eshell-rc-script (concat user-emacs-directory "eshell/profile")    ; your profile for eshell; like a bashrc for eshell.
+    ;;(eshell-aliases-file (concat user-emacs-directory "eshell/aliases") ; sets an aliases file for the eshell. 
+    )
+#+end_src
+
+* Marginalia
+Enrich existing commands with completion annotations
+#+begin_src emacs-lisp
+  (use-package marginalia
+    :ensure t
+    ;; Bind `marginalia-cycle' locally in the minibuffer.  To make the binding
+    ;; available in the *Completions* buffer, add it to the
+    ;; `completion-list-mode-map'.
+    :bind (:map minibuffer-local-map
+           ("M-A" . marginalia-cycle))
+    ;; The :init section is always executed.
+    :init
+    ;; Marginalia must be activated in the :init section of use-package such that
+    ;; the mode gets enabled right away. Note that this forces loading the
+    ;; package.
+    (marginalia-mode)
+    :hook
+    (marginalia-mode . nerd-icons-completion-marginalia-setup))
+#+end_src
+
+* Org Mode
+Una lástima que el formato, independientemente de Emacs, no se haya convertido
+en un estándar como Markdown.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package org
+    :config
+    (electric-indent-local-mode -1)
+    :hook
+    (org-mode . org-indent-mode)
+    :custom
+    ;; (org-hide-emphasis-markers t)
+    (org-format-latex-options (plist-put org-format-latex-options :scale 2.4))
+    (header-line-format nil)
+    (org-emphasis-alist
+     '(("*" (bold :foreground "LightSalmon1"))
+       ("/" (italic :foreground "SpringGreen"))
+       ("_" underline)
+       ("=" (:background "maroon" :foreground "white"))
+       ("~" (:background "deep sky blue" :foreground "MidnightBlue"))
+       ("+" (:strike-through t))))
+    :custom-face ;; list-faces-display
+    (org-level-1 ((t (:foreground "SlateGray2" :weight bold :height 1.3))))
+    (org-level-2 ((t (:foreground "NavajoWhite3" :weight bold :height 1.1))))
+    (org-level-3 ((t (:weight medium :height 1.05))))
+    (org-level-4 ((t (:weight medium :height 1.0))))
+    )
+
+  ;; TOC
+  (use-package toc-org
+    :ensure t
+    :commands toc-org-enable
+    :hook (org-mode . toc-org-enable))
+
+  ;; Bullets
+  (use-package org-bullets
+    :ensure t
+    :hook org-mode)
+
+  ;;; Presentations
+  ;; (use-package org-tree-slide
+  ;;   :ensure t
+  ;;   :custom
+  ;;   (org-image-actual-width nil)
+  ;;   (header-line-format " ")
+  ;;   :hook (org-tree-slide-mode . (lambda () (display-line-numbers-mode 0))))
+  ;; ;; Para ver en html
+  ;; (use-package ox-reveal
+  ;;   :ensure t
+  ;;   :after org-tree-slide)
+
+  ;; ;;; OLD ;;; ;;
+  ;; (add-hook 'org-mode-hook 'variable-pitch-mode)
+#+END_SRC
+
+** Expansions in Org-Tempo
+Org-tempo agrega un snippet para escribir bloques en Org. A saber,
+
+| Typing the below + TAB | Expands to ...                          |
+|------------------------+-----------------------------------------|
+| <a                     | '#+BEGIN_EXPORT ascii' … '#+END_EXPORT  |
+| <c                     | '#+BEGIN_CENTER' … '#+END_CENTER'       |
+| <C                     | '#+BEGIN_COMMENT' … '#+END_COMMENT'     |
+| <e                     | '#+BEGIN_EXAMPLE' … '#+END_EXAMPLE'     |
+| <E                     | '#+BEGIN_EXPORT' … '#+END_EXPORT'       |
+| <h                     | '#+BEGIN_EXPORT html' … '#+END_EXPORT'  |
+| <l                     | '#+BEGIN_EXPORT latex' … '#+END_EXPORT' |
+| <q                     | '#+BEGIN_QUOTE' … '#+END_QUOTE'         |
+| <s                     | '#+BEGIN_SRC' … '#+END_SRC'             |
+| <v                     | '#+BEGIN_VERSE' … '#+END_VERSE'         |
+
+* Markdown
+/markdown-mode (this should be built-in into emacs...)/
+
+The markdown-mode package provides a major mode for Emacs for syntax
+highlighting, editing commands, and preview support for Markdown documents.
+It supports core Markdown syntax as well as extensions like GitHub Flavored
+Markdown (GFM).
+#+begin_src emacs-lisp
+  (use-package markdown-mode
+    :ensure t
+    :defer t
+    :commands (gfm-mode
+               gfm-view-mode
+               markdown-mode
+               markdown-view-mode)
+    :mode (("\\.markdown\\'" . markdown-mode)
+           ("\\.md\\'" . markdown-mode)
+           ("README\\.md\\'" . gfm-mode))
+    :bind
+    (:map markdown-mode-map
+          ("C-c C-e" . markdown-do))
+    :custom-face ;; list-faces-display
+    (markdown-header-face-1 ((t (:foreground "#ff8c69" :weight bold :height 1.4))))
+    (markdown-header-face-2 ((t (:foreground "#bbffff" :weight bold :height 1.2))))
+    (markdown-header-face-3 ((t (:foreground "#ffec8b" :weight bold))))
+    (markdown-italic-face ((t (:foreground "#bfefff" :slant italic))))
+    (markdown-bold-face   ((t (:foreground "#ff34b3" :weight bold))))
+    )
+
+  ;; TOC... why not?
+  ;; Automatically generate a table of contents when editing Markdown files
+  (use-package markdown-toc
+    :ensure t
+    :after markdown-mode
+    :commands (markdown-toc-generate-toc
+               markdown-toc-generate-or-refresh-toc
+               markdown-toc-delete-toc
+               markdown-toc--toc-already-present-p)
+    :custom
+    (markdown-toc-header-toc-title "**Table of Contents**"))
+#+end_src
+
+* Company mode (completion)
+#+begin_src emacs-lisp
+  ;;; company-mode
+  (use-package company
+   :ensure t
+   :defer t
+   :custom
+   (company-idle-delay 0.01)
+   (company-minimum-prefix-length 2)
+   ;; (company-show-numbers t)
+   (company-dabbrev-downcase nil)
+   (company-dabbrev-ignore-case nil)
+   (company-dabbrev-code-ignore-case nil)
+  :hook
+  (python-mode org-mode TeX-mode lisp-mode)
+  )
+  ;; To prevent default down-casing.
+  ;; https://emacs.stackexchange.com/questions/10837/how-to-make-company-mode-be-case-sensitive-on-plain-text
+#+end_src
+
+* Tree-sitter Integration
+Tree-sitter is an incremental parsing system introduced in Emacs 29 that
+provides precise, high-performance syntax analysis and highlighting by
+constructing concrete syntax trees from source code. It supports a broad set of
+programming languages, including Bash, C, C++, C#, CMake, CSS, Dockerfile, Go,
+Java, JavaScript, JSON, Python, Rust, TOML, TypeScript, YAML, Elisp, Lua,
+Markdown, and many others. Unlike traditional font-lock, which relies on regular
+expressions, Tree-sitter uses formal grammar definitions to build real-time
+parse trees, enabling accurate syntax highlighting, structural navigation, code
+folding, and foundational support for advanced editing features like
+refactoring.
+
+The configuration below enables Tree-sitter support using the treesit-auto
+package. Setting treesit-auto-add-to-auto-mode-alist to 'all ensures that all
+available Tree-sitter modes are automatically activated for their corresponding
+file types. Enabling global-treesit-auto-mode applies this behavior globally,
+improving syntax accuracy and consistency across supported languages.
+#+begin_src emacs-lisp
+  (use-package treesit-auto
+    :ensure t
+    :defer t
+    :custom
+    (treesit-auto-install 'prompt)
+    :config
+    (treesit-auto-add-to-auto-mode-alist 'all)
+    (global-treesit-auto-mode))
+#+end_src
+
+* Dired
+#+begin_src emacs-lisp
+  (with-eval-after-load 'dired
+    (require 'dired-x)
+    ;; Set dired-x global variables here. For example: (setq dired-x-hands-off-my-keys nil)
+    )
+
+  (add-hook 'dired-mode-hook 'dired-omit-mode)
+  (setq
+   dired-listing-switches "-la --dired --group-directories-first -h -G" ;; "-lt para ordenar por tiempo"
+   dired-dwim-target t
+   dired-omit-files "^\\."
+   dired-kill-when-opening-new-dired-buffer t
+   dired-guess-shell-alist-user '(
+                                  ("\\.\\(png\\|jpe?g\\|tiff\\)" "imv" "xdg-open") ; abrir con ! o &
+                                  ("\\.\\(mp[34]\\|m4a\\|ogg\\|flac\\|webm\\|mkv\\)" "mpv" "xdg-open")
+                                  (".*" "rifle")
+;;                                  (".*" "xdg-open")
+                                  )
+   )
+#+end_src
+
+* Icons
+#+begin_src emacs-lisp
+  (use-package nerd-icons
+    :ensure t
+    :if (display-graphic-p)
+    :custom
+    ;; (nerd-icons-font-family "Symbols Nerd Font Mono") ; "Symbols Nerd Font Mono" is the default and is recommended. You can change it anyways
+    ;; Whether display the icons.
+    (nerd-icons-ibuffer-icon t)
+    ;; Whether display the colorful icons.
+    ;; It respects `nerd-icons-color-icons'.
+    (nerd-icons-ibuffer-color-icon t)
+    ;; The default icon size in ibuffer.
+    (nerd-icons-ibuffer-icon-size 1.0)
+    ;; Use human readable file size in ibuffer.
+    (nerd-icons-ibuffer-human-readable-size t)
+    ;; Slow Rendering
+    ;; If you experience a slow down in performance when rendering multiple icons simultaneously,
+    ;; you can try setting the following variable
+    ;;(inhibit-compacting-font-caches t)
+    :config
+    
+    ;; completions
+    (use-package nerd-icons-completion
+      :after marginalia
+      :config
+      (nerd-icons-completion-mode))
+
+    ;; dired
+    (use-package nerd-icons-dired
+      :ensure t
+      :delight
+      :hook
+      (dired-mode . nerd-icons-dired-mode))
+    
+    ;; ibuffer
+    (use-package nerd-icons-ibuffer
+      :ensure t
+      :bind ("C-x C-b" . ibuffer)
+      :hook (ibuffer-mode . nerd-icons-ibuffer-mode)))
+#+end_src
+
+* Evil
+#+begin_src emacs-lisp
+  (use-package evil
+    :ensure t
+    :defer t
+    :commands (evil-mode evil-define-key)
+    ;; :hook (after-init . evil-mode)
+
+    :init
+    ;; It has to be defined before evil
+    (setq evil-want-integration t
+        evil-want-keybinding t
+        evil-default-state 'normal
+        evil-undo-system 'undo-fu)
+
+    :custom
+    ;; Make :s in visual mode operate only on the actual visual selection
+    ;; (character or block), instead of the full lines covered by the selection
+    (evil-ex-visual-char-range t)
+    ;; Use Vim-style regular expressions in search and substitute commands,
+    ;; allowing features like \v (very magic), \zs, and \ze for precise matches
+    (evil-ex-search-vim-style-regexp t)
+    ;; Enable automatic horizontal split below
+    (evil-split-window-below t)
+    ;; Enable automatic vertical split to the right
+    (evil-vsplit-window-right t)
+    ;; Disable echoing Evil state to avoid replacing eldoc
+    (evil-echo-state nil)
+    ;; Do not move cursor back when exiting insert state
+    (evil-move-cursor-back nil)
+    ;; Make `v$` exclude the final newline
+    (evil-v$-excludes-newline t)
+    ;; Allow C-h to delete in insert state
+    (evil-want-C-h-delete t)
+    ;; Enable C-u to delete back to indentation in insert state
+    (evil-want-C-u-delete t)
+    ;; Enable C-u to scroll back in normal mode
+    (evil-want-C-u-scroll t)
+    ;; Enable fine-grained undo behavior
+    (evil-want-fine-undo t)
+    ;; Allow moving cursor beyond end-of-line in visual block mode
+    (evil-move-beyond-eol t)
+    ;; Disable wrapping of search around buffer
+    (evil-search-wrap nil)
+    ;; Whether Y yanks to the end of the line
+    (evil-want-Y-yank-to-eol t)
+    
+    :config
+    (evil-set-initial-state 'dired-mode 'emacs)
+    ;; The undo-fu package is a lightweight wrapper around Emacs' built-in undo
+    ;; system, providing more convenient undo/redo functionality.
+    (use-package undo-fu
+      :defer t
+      :ensure t
+      :commands (undo-fu-only-undo
+                 undo-fu-only-redo
+                 undo-fu-only-redo-all
+                 undo-fu-disable-checkpoint)
+      :config
+      (global-unset-key (kbd "C-z"))
+      (global-set-key (kbd "C-z") 'undo-fu-only-undo)
+      (global-set-key (kbd "C-S-z") 'undo-fu-only-redo))
+    
+    (use-package evil-escape
+      :delight
+      :after evil
+      :ensure t
+      :config
+      (setq evil-escape-key-sequence "jk")
+      (evil-escape-mode 1))
+    )
+#+end_src
+
+* Darkroom (zen-mode)
+Remove visual distractions and focus on writing.
+#+begin_src emacs-lisp
+  (use-package darkroom
+    :ensure t
+    :defer t
+    :hook (darkroom-mode . visual-line-mode)
+    :bind
+    (("C-x C-M-z" . darkroom-mode)))
+#+end_src
+
+* Denote
+Un paquete para tomar notas (ver manual).
+#+begin_src emacs-lisp
+  (use-package denote
+    :ensure t
+    :hook (dired-mode . denote-dired-mode)
+    :bind
+    (("C-c n n" . denote)
+     ("C-c n r" . denote-rename-file)
+     ("C-c n l" . denote-link)
+     ("C-c n b" . denote-backlinks)
+     ("C-c n d" . denote-dired)
+     ("C-c n g" . denote-grep))
+    :config
+    (setq denote-directory (expand-file-name "~/notes/"))
+
+    ;; Automatically rename Denote buffers when opening them so that
+    ;; instead of their long file name they have, for example, a literal
+    ;; "[D]" followed by the file's title.  Read the doc string of
+    ;; `denote-rename-buffer-format' for how to modify this.
+    (denote-rename-buffer-mode 1))
+#+end_src
+
+* Windmove
+Emacs tiene un paquete para moverse de una manera más comoda entre ventanas.
+Estas keybindings simulan un tiling window manager, lo que en mi opinión
+complementa el uso de un stacking window manager (labwc en mi caso).
+#+begin_src emacs-lisp
+  (use-package windmove
+    :ensure nil
+    :bind*
+    (
+     ("s-h"  . windmove-left)
+     ("s-l" . windmove-right)
+     ("s-k"    . windmove-up)
+     ("s-j"  . windmove-down)
+     ("C-s-h"  . windmove-swap-states-left)
+     ("C-s-l" . windmove-swap-states-right)
+     ("C-s-k"    . windmove-swap-states-up)
+     ("C-s-j"  . windmove-swap-states-down)
+     ))
+#+end_src
