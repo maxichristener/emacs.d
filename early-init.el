@@ -19,6 +19,25 @@
       load-prefer-newer t ; prefer newer compiled files
       )
 
+;;; Initial frame alist ;;;
+(setq initial-frame-alist
+      '(
+	(width . 120)
+	(height . 50)
+	(border-width . 0)	
+	(menu-bar-lines . 0)
+	(tool-bar-lines . 0)
+	(horizontal-scroll-bars . nil)
+	(vertical-scroll-bars . nil)
+	(scroll-bar-width . 12)
+	))
+
+(setq inhibit-splash-screen t
+      menu-bar-mode nil
+      tool-bar-mode nil
+      default-frame-scroll-bars 'right
+      scroll-bar-mode nil)
+
 ;;; Directories ;;;
 (setq custom-theme-directory
       (expand-file-name "themes/" user-emacs-directory)
@@ -71,34 +90,6 @@
   ;; Suppress the vanilla startup screen completely. 
   (advice-add 'display-startup-screen :override #'ignore)
   )
-
-
-;;; Disabling useless aesthetics ;;;
-
-;; Disable startup screens and messages
-(setq inhibit-splash-screen t)
-
-;; menu-bar
-(push '(menu-bar-lines . 0) default-frame-alist)
-(setq menu-bar-mode nil)
-
-;; tool-bar
-(when (and (not (daemonp))
-           (not noninteractive))
-  (when (fboundp 'tool-bar-setup)
-    ;; Temporarily override the tool-bar-setup function to prevent it from
-    ;; running during the initial stages of startup
-    (advice-add 'tool-bar-setup :override #'ignore)
-    ))
-(push '(tool-bar-lines . 0) default-frame-alist)
-(setq tool-bar-mode nil)
-
-;; scroll-bar
-(setq default-frame-scroll-bars 'right)
-(push '(vertical-scroll-bars) default-frame-alist)
-(push '(horizontal-scroll-bars) default-frame-alist)
-(setq scroll-bar-mode nil)
-
 
 ;;; Security ;;;
 (setq gnutls-verify-error t)  ; Prompts user if there are certificate issues
