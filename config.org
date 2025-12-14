@@ -449,6 +449,7 @@ improving syntax accuracy and consistency across supported languages.
     
     ;; completions
     (use-package nerd-icons-completion
+      :ensure t
       :after marginalia
       :config
       (nerd-icons-completion-mode))
