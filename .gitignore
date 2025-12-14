@@ -1,0 +1,7 @@
+*
+!README.org
+!.gitignore
+
+!early-init.el
+!init.el
+!config.org
