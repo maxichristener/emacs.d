@@ -205,6 +205,7 @@
 (setq delete-pair-blink-delay 0.03)
 
 ;;;;;;;;
+(setq-default truncate-lines t)
 ;; If enabled and `truncate-lines' is disabled, soft wrapping will not occur
 ;; when the window is narrower than `truncate-partial-width-windows' characters.
 (setq truncate-partial-width-windows nil)
