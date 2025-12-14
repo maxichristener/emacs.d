@@ -30,16 +30,21 @@ Algunos tips útiles para la navegación:
 - =C-c C-o= (org-open-at-point)
 
 #+begin_src emacs-lisp
-  (defvar default-emacs-font "JetBrainsMono NF 14"
-    "The main font used by Emacs")
-
   (use-package emacs
     :config
+    ;; theme
     (load-theme 'modus-vivendi t)
-    (add-to-list 'default-frame-alist `(font . ,default-emacs-font))
-    ;; (set-face-attribute 'default nil :height 125) ;; default zoom
 
-    ;; functions
+    ;;; faces ;;;
+    (set-face-attribute 'default nil
+  		      :family "JetBrainsMono NF"
+  		      :height 140)
+
+    (set-face-attribute 'variable-pitch nil
+  		    :family "Fira Sans"
+  		    :height 150)
+
+    ;;; functions (migrate to user-lisp-directory whenever Emacs 31 is released) ;;;
     (defun christener/open-config-file ()
       "Opens config.org"
       (interactive)
