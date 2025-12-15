@@ -71,6 +71,12 @@ Algunos tips útiles para la navegación:
                         (split-window-vertically)
                       (split-window-horizontally))
                     (set-window-buffer (windmove-find-other-window neighbour-dir) other-buf))))))))
+
+    (defun christener/kill-buffer ()
+      (interactive)
+      (condition-case nil
+  	(kill-buffer-and-window)
+        (kill-buffer)))
     
     :custom
     (mode-line-position-column-line-format '("%l:%C"))
@@ -85,6 +91,7 @@ Algunos tips útiles para la navegación:
     ;; custom functions
     ("C-x M-x" . christener/open-config-file)
     ("s-r" . christener/window-rotate-split)
+    ("C-M-s-k" . christener/kill-buffer)
     ;; alternative keybindings for resizing
     ("s--" . shrink-window)
     ("s-+" . enlarge-window)
