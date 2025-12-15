@@ -90,6 +90,9 @@ Algunos tips útiles para la navegación:
     ("s-+" . enlarge-window)
     ("C-s--" . shrink-window-horizontally)
     ("C-s-+" . enlarge-window-horizontally)
+    ;; alt kbd for previous/next buffer
+    ("C-M-s-h" . previous-buffer)
+    ("C-M-s-l" . next-buffer)
     ;; vim-like C-d C-u motions
     ("s-d" . (lambda () (interactive) (next-line 20)))
     ("s-u" . (lambda () (interactive) (previous-line 20)))
