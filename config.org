@@ -444,10 +444,10 @@ improving syntax accuracy and consistency across supported languages.
      dired-omit-files "^\\."
      dired-kill-when-opening-new-dired-buffer t
      dired-guess-shell-alist-user '(
-                                    ("\\.\\(png\\|jpe?g\\|tiff\\)" "imv" "xdg-open") ; abrir con ! o &
-                                    ("\\.\\(mp[34]\\|m4a\\|ogg\\|flac\\|webm\\|mkv\\)" "mpv" "xdg-open")
+                                ;;  ("\\.\\(png\\|jpe?g\\|tiff\\)" "imv" "xdg-open") ; abrir con ! o &
+                                ;;  ("\\.\\(mp[34]\\|m4a\\|ogg\\|flac\\|webm\\|mkv\\)" "mpv" "xdg-open")
+    				  ;;  (".*" "xdg-open")
                                     (".*" "rifle")
-    				  ;;                                  (".*" "xdg-open")
                                     )
      )
     )
