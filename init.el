@@ -159,7 +159,7 @@
 ;; Emacs recenters the window when the cursor moves past `scroll-conservatively'
 ;; lines beyond the window edge. A value over 101 disables recentering; the
 ;; default (0) is too eager. Here it is set to 20 for a balanced behavior.
-(setq scroll-conservatively 20)
+(setq scroll-conservatively 106)
 
 ;; 1. Preventing automatic adjustments to `window-vscroll' for long lines.
 ;; 2. Resolving the issue of random half-screen jumps during scrolling.
@@ -239,8 +239,8 @@
 
 (setq dired-free-space nil
       dired-dwim-target t  ; Propose a target for intelligent moving/copying
-      dired-deletion-confirmer 'y-or-n-p
-      dired-filter-verbose nil
+      ;;dired-deletion-confirmer 'y-or-n-p
+      ;;dired-filter-verbose nil
       dired-recursive-deletes 'top
       dired-recursive-copies 'always
       dired-vc-rename-file t
@@ -252,8 +252,7 @@
 (setq dired-auto-revert-buffer 'dired-buffer-stale-p)
 
 ;; dired-omit-mode
-(setq dired-omit-verbose nil
-      dired-omit-files (concat "\\`[.]\\'"))
+(setq dired-omit-verbose nil)
 
 ;; (setq ls-lisp-verbosity nil)
 ;; (setq ls-lisp-dirs-first t)
