@@ -107,6 +107,8 @@ Algunos tips útiles para la navegación:
     ;; alt kbd for previous/next buffer
     ("C-M-s-h" . previous-buffer)
     ("C-M-s-l" . next-buffer)
+    ("M-s-<return>" . split-window-right)
+    ("C-s-<return>" . split-window-below)
     ;; vim-like C-d C-u motions
     ("s-d" . (lambda () (interactive) (next-line 20)))
     ("s-u" . (lambda () (interactive) (previous-line 20)))
