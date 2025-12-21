@@ -41,7 +41,7 @@ Algunos tips útiles para la navegación:
   		      :height 140)
 
     (set-face-attribute 'variable-pitch nil
-  		    :family "Fira Sans"
+  		    :family "IBM Plex Sans"
   		    :height 150)
 
     ;;; functions (migrate to user-lisp-directory whenever Emacs 31 is released) ;;;
