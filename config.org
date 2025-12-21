@@ -140,7 +140,7 @@ package name with ‘-mode’ appended, provide a symbol instead.
   (use-package pythonic
     :ensure t
     :config
-    (defun python-run-venv ()
+    (defun run-venv ()
       "Activate the .venv in the current directory (if available) and start a Python REPL."
       (interactive)
       (let ((venv-dir (file-name-concat default-directory ".venv")))
@@ -151,9 +151,6 @@ package name with ‘-mode’ appended, provide a symbol instead.
   	      (switch-to-buffer-other-window "*Python*"))
   	(message "Cannot find virtualenv in the current directory")
   	)))
-    :bind
-    (:map dired-mode-map
-  	("<f8>" . python-run-venv))
     )
 
 #+end_src
